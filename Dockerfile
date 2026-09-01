@@ -16,7 +16,7 @@ RUN find /tmp/fieldpulse-payload -type f -name '*.b64' -print0 | while IFS= read
       mkdir -p "$(dirname "$target")"; \
       base64 -d "$encoded" | gzip -d > "$target"; \
     done \
-    && rm -rf /tmp/fieldpulse-payload
+    && rm -rf /tmp/fieldpulse-payload /var/www/html/payload
 
 RUN mkdir -p /var/www/html/assets/uploads \
     && chown -R www-data:www-data /var/www/html/assets/uploads \
