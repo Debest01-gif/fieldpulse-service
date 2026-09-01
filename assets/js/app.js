@@ -3,6 +3,9 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Clear a stale scroll lock left by a modal before this page loaded.
+    syncModalScrollLock();
+
     // 1. Initialize Lucide Icons
     if (window.lucide) {
         lucide.createIcons();
@@ -31,6 +34,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const modal = btn.closest('.modal-backdrop');
             if (modal) closeModal(modal.id);
         });
+    });
+
+    // Escape should close the visible modal and restore page scrolling.
+    document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape') return;
+        const openModalElement = document.querySelector('.modal-backdrop.show');
+        if (openModalElement) closeModal(openModalElement.id);
     });
 
     // 4. Live Table Search Filter
@@ -71,7 +81,7 @@ function openModal(id) {
     const modal = document.getElementById(id);
     if (modal) {
         modal.classList.add('show');
-        document.body.style.overflow = 'hidden';
+        syncModalScrollLock();
         if (window.lucide) lucide.createIcons();
     }
 }
@@ -80,7 +90,18 @@ function closeModal(id) {
     const modal = document.getElementById(id);
     if (modal) {
         modal.classList.remove('show');
-        document.body.style.overflow = '';
+        syncModalScrollLock();
+    }
+}
+
+function syncModalScrollLock() {
+    const hasOpenModal = document.querySelector('.modal-backdrop.show') !== null;
+    document.body.classList.toggle('modal-open', hasOpenModal);
+
+    // Remove the old inline lock if no modal is actually visible. This also
+    // repairs pages loaded after an interrupted modal interaction.
+    if (!hasOpenModal) {
+        document.body.style.removeProperty('overflow');
     }
 }
 
