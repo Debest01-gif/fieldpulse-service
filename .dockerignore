@@ -1,0 +1,9 @@
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+attached_assets
+assets/uploads/*
+!assets/uploads/.gitkeep
+README.md

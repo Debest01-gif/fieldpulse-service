@@ -1,0 +1,37 @@
+services:
+  - type: web
+    name: fieldpulse
+    runtime: docker
+    region: frankfurt
+    plan: starter
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /login.php
+    envVars:
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: "3306"
+      - key: DB_NAME
+        value: field_service_db
+      - key: DB_USER
+        sync: false
+      - key: DB_PASS
+        sync: false
+      - key: ADMIN_NAME
+        value: System Administrator
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PHONE
+        value: "0000000000"
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: BASE_URL
+        value: ""
+      - key: DEMO_MODE
+        value: "false"
+      - key: SEED_DEMO_DATA
+        value: "false"
+    disk:
+      name: fieldpulse-uploads
+      mountPath: /var/www/html/assets/uploads
+      sizeGB: 1

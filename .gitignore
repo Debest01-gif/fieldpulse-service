@@ -1,0 +1,12 @@
+.env
+.env.*
+!.env.example
+.cache/
+.local/
+attached_assets/
+.DS_Store
+*.log
+*.zip
+assets/uploads/*
+!assets/uploads/.gitkeep
+.phpunit.result.cache
