@@ -1,6 +1,7 @@
 <?php
 $pageTitle = 'Dispatch & Scheduling Board';
 require_once __DIR__ . '/config/db.php';
+require_auth();
 $db = get_db();
 
 // Selected date
