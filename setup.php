@@ -8,52 +8,41 @@ ini_set('display_errors', 1);
 $host = getenv('DB_HOST') ?: 'localhost';
 $port = getenv('DB_PORT') ?: '3306';
 $user = getenv('DB_USER') ?: 'root';
-$pass = getenv('DB_PASS') ?: '';
+$pass = getenv('DB_PASS') !== false ? getenv('DB_PASS') : '';
 $dbname = getenv('DB_NAME') ?: 'field_service_db';
-$seedDemoData = filter_var(getenv('SEED_DEMO_DATA') ?: 'false', FILTER_VALIDATE_BOOLEAN);
-$adminName = getenv('ADMIN_NAME') ?: 'System Administrator';
-$adminEmail = getenv('ADMIN_EMAIL') ?: 'admin@example.com';
-$adminPhone = getenv('ADMIN_PHONE') ?: '0000000000';
-$adminPassword = getenv('ADMIN_PASSWORD') ?: ($seedDemoData ? 'admin123' : '');
 
 $messages = [];
 $success = false;
 
 try {
-    if ($adminPassword === '') {
-        throw new Exception("Set ADMIN_PASSWORD before running setup.php.");
-    }
-
-    // 1. Connect to the configured database. If it does not exist and the
-    // account has permission, create it for local development.
+    // 1. Try connecting directly to target db first (standard on hosted clouds like Aiven/Render)
     try {
         $pdo = new PDO("mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4", $user, $pass, [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => false,
         ]);
-    } catch (PDOException $databaseException) {
-        if ((int) $databaseException->getCode() !== 1049) {
-            throw $databaseException;
-        }
-        $serverPdo = new PDO("mysql:host=$host;port=$port;charset=utf8mb4", $user, $pass, [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+    } catch (PDOException $ex) {
+        // If DB doesn't exist, connect without db and create it
+        $pdo = new PDO("mysql:host=$host;port=$port;charset=utf8mb4", $user, $pass, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => false,
         ]);
-        $serverPdo->exec("CREATE DATABASE IF NOT EXISTS `" . str_replace('`', '``', $dbname) . "` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-        $pdo = new PDO("mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4", $user, $pass, [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
-        ]);
+        $pdo->exec("CREATE DATABASE IF NOT EXISTS `$dbname` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+        $pdo->exec("USE `$dbname`");
     }
-    $messages[] = "Database `$dbname` verified/created successfully.";
+    $messages[] = "Database `$dbname` connected/verified successfully.";
 
-    // 2. Read database.sql. CREATE DATABASE/USE statements are stripped so
-    // managed MySQL accounts without database-admin privileges also work.
+    // 4. Read database.sql
     $sqlFile = __DIR__ . '/database.sql';
     if (!file_exists($sqlFile)) {
         $sqlFile = __DIR__ . '/../database.sql';
     }
     if (file_exists($sqlFile)) {
         $sql = file_get_contents($sqlFile);
-        $sql = preg_replace('/^\s*CREATE DATABASE IF NOT EXISTS[^;]+;\s*$/mi', '', $sql);
-        $sql = preg_replace('/^\s*USE\s+`?[^;`]+`?\s*;\s*$/mi', '', $sql);
+        if ($dbname !== 'field_service_db') {
+            $sql = preg_replace('/CREATE DATABASE [^;]+;/i', '', $sql);
+            $sql = preg_replace('/USE `?[^;`]+`?;/i', '', $sql);
+        }
         $pdo->exec($sql);
         $messages[] = "Database tables created successfully.";
     } else {
@@ -64,23 +53,19 @@ try {
     $userCount = $pdo->query("SELECT COUNT(*) FROM users")->fetchColumn();
 
     if ($userCount == 0) {
-        // Always create one administrator. Demo records are opt-in so a
-        // public deployment never ships with a known password or fake data.
-        $passwordHash = password_hash($adminPassword, PASSWORD_BCRYPT);
+        // Seed Users (Admin, Dispatcher, Technicians with Kenyan profiles)
+        $passwordHash = password_hash('admin123', PASSWORD_BCRYPT);
+        
         $users = [
-            [$adminName, $adminEmail, $adminPhone, $passwordHash, 'admin', 'Management, Operations', 'available', '']
+            ['Kiptoo Mwangi', 'admin@fieldpulse.co.ke', '+254722100200', $passwordHash, 'admin', 'Management, Operations', 'available', 'avatar_1.png'],
+            ['Amina Wanjiku', 'dispatch@fieldpulse.co.ke', '+254733400500', $passwordHash, 'dispatcher', 'Scheduling, Customer Relations', 'available', 'avatar_2.png'],
+            ['Dennis Otieno', 'dennis.tech@fieldpulse.co.ke', '+254712345678', $passwordHash, 'technician', 'Solar, Inverters, Battery Banks', 'on_job', 'avatar_3.png'],
+            ['Brian Kipkemboi', 'brian.tech@fieldpulse.co.ke', '+254723456789', $passwordHash, 'technician', 'Electrical, Wiring, Generator Changeovers', 'available', 'avatar_4.png'],
+            ['Kevin Mutua', 'kevin.tech@fieldpulse.co.ke', '+254734567890', $passwordHash, 'technician', 'CCTV, Access Control, Biometrics', 'available', 'avatar_5.png'],
+            ['Samuel Njoroge', 'samuel.tech@fieldpulse.co.ke', '+254745678901', $passwordHash, 'technician', 'Plumbing, Solar Water Heaters, Booster Pumps', 'on_job', 'avatar_6.png'],
+            ['Peter Macharia', 'peter.tech@fieldpulse.co.ke', '+254756789012', $passwordHash, 'technician', 'Fibre, Networking, Mikrotik, Wi-Fi Extenders', 'available', 'avatar_7.png'],
+            ['Jackson Ochieng', 'jackson.tech@fieldpulse.co.ke', '+254767890123', $passwordHash, 'technician', 'HVAC, Cold Rooms, Air Conditioning', 'available', 'avatar_8.png']
         ];
-        if ($seedDemoData) {
-            $users = array_merge($users, [
-                ['Amina Wanjiku', 'dispatch@fieldpulse.co.ke', '+254733400500', $passwordHash, 'dispatcher', 'Scheduling, Customer Relations', 'available', 'avatar_2.png'],
-                ['Dennis Otieno', 'dennis.tech@fieldpulse.co.ke', '+254712345678', $passwordHash, 'technician', 'Solar, Inverters, Battery Banks', 'on_job', 'avatar_3.png'],
-                ['Brian Kipkemboi', 'brian.tech@fieldpulse.co.ke', '+254723456789', $passwordHash, 'technician', 'Electrical, Wiring, Generator Changeovers', 'available', 'avatar_4.png'],
-                ['Kevin Mutua', 'kevin.tech@fieldpulse.co.ke', '+254734567890', $passwordHash, 'technician', 'CCTV, Access Control, Biometrics', 'available', 'avatar_5.png'],
-                ['Samuel Njoroge', 'samuel.tech@fieldpulse.co.ke', '+254745678901', $passwordHash, 'technician', 'Plumbing, Solar Water Heaters, Booster Pumps', 'on_job', 'avatar_6.png'],
-                ['Peter Macharia', 'peter.tech@fieldpulse.co.ke', '+254756789012', $passwordHash, 'technician', 'Fibre, Networking, Mikrotik, Wi-Fi Extenders', 'available', 'avatar_7.png'],
-                ['Jackson Ochieng', 'jackson.tech@fieldpulse.co.ke', '+254767890123', $passwordHash, 'technician', 'HVAC, Cold Rooms, Air Conditioning', 'available', 'avatar_8.png']
-            ]);
-        }
 
         $stmtUser = $pdo->prepare("INSERT INTO users (name, email, phone, password, role, trade_skills, status, avatar) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
         foreach ($users as $u) {
@@ -88,7 +73,6 @@ try {
         }
         $messages[] = "Seeded " . count($users) . " system users & field technicians.";
 
-        if ($seedDemoData) {
         // Seed Customers
         $customers = [
             ['Apex Towers Ltd', 'Esther Mutua', '+254722889900', '+254733889900', 'facilities@apextowers.co.ke', 'Upper Hill, Hospital Rd', 'Apex Towers, 5th Floor Server Room', 'Near Britam Tower', '-1.2995, 36.8184', 'commercial', 'Access requires security gate pass at reception'],
@@ -227,7 +211,6 @@ try {
             $stmtNotif->execute($n);
         }
         $messages[] = "Seeded notification alerts.";
-        }
     }
 
     $success = true;

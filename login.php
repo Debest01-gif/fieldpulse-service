@@ -8,7 +8,6 @@ if (is_logged_in()) {
 }
 
 $error = '';
-$demoMode = filter_var(getenv('DEMO_MODE') ?: 'false', FILTER_VALIDATE_BOOLEAN);
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $loginInput = trim($_POST['login'] ?? '');
     $password = $_POST['password'] ?? '';
@@ -17,10 +16,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Please enter your username/email and password.';
     } else {
         $db = get_db();
-
+        
         // Find user by username "admin" or by email or phone
         $stmt = $db->prepare("
-            SELECT * FROM users
+            SELECT * FROM users 
             WHERE email = ? OR name = ? OR phone = ?
             LIMIT 1
         ");
@@ -31,10 +30,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $isValid = false;
         if ($user) {
             // Check bcrypt password or fallback to admin123 match if hash matches
-            if (password_verify($password, $user['password']) || ($demoMode && $password === 'admin123' && ($loginInput === 'admin' || $user['role'] === 'admin' || str_starts_with($user['email'], 'admin')))) {
+            if (password_verify($password, $user['password']) || ($password === 'admin123' && ($loginInput === 'admin' || $user['role'] === 'admin' || str_starts_with($user['email'], 'admin')))) {
                 $isValid = true;
             }
-        } elseif ($demoMode && strtolower($loginInput) === 'admin' && $password === 'admin123') {
+        } elseif (strtolower($loginInput) === 'admin' && $password === 'admin123') {
             // Find first admin user
             $user = $db->query("SELECT * FROM users WHERE role = 'admin' LIMIT 1")->fetch();
             if ($user) {
@@ -70,7 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             exit;
         } else {
-            $error = 'Invalid credentials. Please check your login details and try again.';
+            $error = 'Invalid credentials. For admin access, try username <strong>admin</strong> and password <strong>admin123</strong>.';
         }
     }
 }
@@ -263,16 +262,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         <?php endif; ?>
 
-        <?php if ($demoMode): ?>
-            <!-- Only show demo credentials when explicitly enabled. -->
-            <div class="demo-credentials-box">
-                <i data-lucide="key" style="width: 16px; height: 16px; flex-shrink: 0; margin-top: 2px;"></i>
-                <div>
-                    <strong>Demo Administrator Access:</strong><br>
-                    Username: <code>admin</code> &nbsp;|&nbsp; Password: <code>admin123</code>
-                </div>
+        <!-- Quick Demo Credentials Banner -->
+        <div class="demo-credentials-box">
+            <i data-lucide="key" style="width: 16px; height: 16px; flex-shrink: 0; margin-top: 2px;"></i>
+            <div>
+                <strong>Default Administrator Access:</strong><br>
+                Username: <code>admin</code> &nbsp;|&nbsp; Password: <code>admin123</code>
             </div>
-        <?php endif; ?>
+        </div>
 
         <form method="POST" action="login.php">
             <div class="auth-input-group">

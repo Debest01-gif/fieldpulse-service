@@ -1,11 +1,14 @@
 FROM php:8.2-apache
 
-RUN docker-php-ext-install pdo_mysql \
-    && a2enmod rewrite headers
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    mariadb-server \
+    mariadb-client \
+    && docker-php-ext-install pdo_mysql \
+    && a2enmod rewrite headers \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /var/www/html
 COPY . /var/www/html/
-# Clean up any leftover payload directory if present
 RUN rm -rf /var/www/html/payload
 
 RUN mkdir -p /var/www/html/assets/uploads \

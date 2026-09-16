@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = "An account with the email '{$email}' is already registered. Please sign in.";
         } else {
             $passwordHash = password_hash($password, PASSWORD_BCRYPT);
-
+            
             // Default skills if left empty
             if (empty($skills)) {
                 $skills = ($role === 'technician') ? 'General Maintenance' : 'Operations & Support';

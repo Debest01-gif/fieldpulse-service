@@ -1,0 +1,51 @@
+FIELDPULSE - XAMPP INSTALLATION
+================================
+
+1. Extract the folder named "new service" into:
+   C:\xampp\htdocs\
+
+   The final path must be:
+   C:\xampp\htdocs\new service\index.php
+
+2. Start XAMPP Control Panel.
+   - Apache: Start
+   - MySQL: Start
+
+   In the screenshot you provided, both are already running on:
+   Apache: 80, 443
+   MySQL: 3306
+
+3. Open this address:
+   http://localhost/new%20service/
+
+4. If this is the first installation, the application will send you to:
+   http://localhost/new%20service/setup.php
+
+   Let the setup finish, then open the dashboard.
+
+5. Demo admin login:
+   Username: admin
+   Password: admin123
+
+IMPORTANT ABOUT THE RED XAMPP MESSAGES
+--------------------------------------
+The red MySQL lines in the supplied screenshot are old messages from an
+earlier failed start attempt. The final line in the screenshot says:
+
+   Status change detected: running
+
+That means MySQL is currently running.
+
+To clear those old red lines:
+- Stop MySQL.
+- Close the XAMPP Control Panel completely.
+- Reopen XAMPP Control Panel.
+- Start Apache and MySQL again.
+
+Do NOT change MySQL from port 3306 just because of those old red lines.
+If MySQL starts and remains green/running, the old red text was only the
+previous attempt's log history.
+
+If MySQL immediately stops again after restarting XAMPP, then the problem
+is a real MySQL startup/port/service issue and the MySQL error log must be
+checked.

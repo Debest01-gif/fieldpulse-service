@@ -23,16 +23,22 @@ if (($_SESSION['_version'] ?? 0) !== SESSION_VERSION) {
 }
 
 
-// Database configuration. Environment variables are used in production and
-// local-development defaults are kept for the original XAMPP setup.
+// Database configuration with environment variable fallbacks
 define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
 define('DB_PORT', getenv('DB_PORT') ?: '3306');
 define('DB_USER', getenv('DB_USER') ?: 'root');
-define('DB_PASS', getenv('DB_PASS') ?: '');
+define('DB_PASS', getenv('DB_PASS') !== false ? getenv('DB_PASS') : '');
 define('DB_NAME', getenv('DB_NAME') ?: 'field_service_db');
 define('APP_NAME', 'FieldPulse');
 define('APP_TAGLINE', 'Field Service Management System');
-define('BASE_URL', rtrim((string) (getenv('BASE_URL') ?: ''), '/'));
+
+$baseUrl = getenv('BASE_URL');
+if ($baseUrl === false || $baseUrl === null) {
+    // Auto-detect base URL
+    $scriptDir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? ''));
+    $baseUrl = ($scriptDir === '/' || $scriptDir === '.') ? '' : $scriptDir;
+}
+define('BASE_URL', rtrim($baseUrl, '/'));
 
 /**
  * Returns the PDO database connection instance.
@@ -47,6 +53,7 @@ function get_db(): PDO {
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 PDO::ATTR_EMULATE_PREPARES => false,
+                PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => false,
             ];
             $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
         } catch (PDOException $e) {
