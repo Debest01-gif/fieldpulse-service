@@ -1,0 +1,44 @@
+{
+    "name": "FieldPulse Kenya",
+    "short_name": "FieldPulse",
+    "description": "Field Service & Dispatch Management System — Book services, track technicians, manage jobs.",
+    "start_url": "/login.php",
+    "scope": "/",
+    "display": "standalone",
+    "orientation": "portrait-primary",
+    "background_color": "#020617",
+    "theme_color": "#0284c7",
+    "categories": ["business", "utilities"],
+    "lang": "en",
+    "icons": [
+        {
+            "src": "/assets/icons/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/assets/icons/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "screenshots": [],
+    "shortcuts": [
+        {
+            "name": "Book Service",
+            "short_name": "Book",
+            "description": "Book a new field service",
+            "url": "/book_service.php",
+            "icons": [{"src": "/assets/icons/icon-192.png", "sizes": "192x192"}]
+        },
+        {
+            "name": "My Requests",
+            "short_name": "Requests",
+            "description": "View my service requests",
+            "url": "/customer_portal.php",
+            "icons": [{"src": "/assets/icons/icon-192.png", "sizes": "192x192"}]
+        }
+    ]
+}

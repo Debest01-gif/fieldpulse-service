@@ -104,8 +104,18 @@ $stmtJobs = $db->prepare("
 $stmtJobs->execute([$customerId]);
 $jobs = $stmtJobs->fetchAll();
 
-// Fetch Customer Requests
-$stmtReqs = $db->prepare("SELECT * FROM service_requests WHERE customer_id = ? ORDER BY created_at DESC");
+// Fetch Customer Requests with assigned technician details
+$stmtReqs = $db->prepare("
+    SELECT r.*, a.asset_name,
+           j.id as job_id, j.job_number, j.status as job_status, j.scheduled_date as job_date, j.scheduled_time as job_time,
+           u.id as tech_id, u.name as tech_name, u.phone as tech_phone, u.trade_skills as tech_skills
+    FROM service_requests r
+    LEFT JOIN customer_assets a ON r.asset_id = a.id
+    LEFT JOIN job_cards j ON j.request_id = r.id
+    LEFT JOIN users u ON j.technician_id = u.id
+    WHERE r.customer_id = ?
+    ORDER BY r.created_at DESC
+");
 $stmtReqs->execute([$customerId]);
 $requests = $stmtReqs->fetchAll();
 
@@ -217,6 +227,89 @@ include __DIR__ . '/includes/header.php';
                                                     <i data-lucide="trash-2" style="width: 12px; height: 12px;"></i>
                                                 </button>
                                             </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Service Requests & Inquiries -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title"><i data-lucide="inbox"></i> Service Requests & Inquiries</span>
+                <a href="request_create.php?customer_id=<?= $customer['id'] ?>" class="btn btn-secondary btn-sm">
+                    <i data-lucide="plus"></i> New Request
+                </a>
+            </div>
+            <div class="table-responsive">
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th>Ticket #</th>
+                            <th>Trade Category</th>
+                            <th>Issue Summary</th>
+                            <th>Assigned Field Tech</th>
+                            <th>Schedule</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (empty($requests)): ?>
+                            <tr><td colspan="7" style="text-align: center; padding: 20px; color: var(--text-muted);">No service requests logged for this customer.</td></tr>
+                        <?php else: ?>
+                            <?php foreach ($requests as $req): ?>
+                                <tr>
+                                    <td>
+                                        <a href="customer_portal.php?ticket=<?= urlencode($req['ticket_no']) ?>" target="_blank" style="font-weight: 700; color: var(--primary); font-family: var(--font-mono);">
+                                            <?= htmlspecialchars($req['ticket_no']) ?>
+                                        </a>
+                                        <div style="margin-top: 2px;"><?= get_priority_badge($req['priority']) ?></div>
+                                    </td>
+                                    <td><?= get_trade_badge($req['trade_category']) ?></td>
+                                    <td>
+                                        <div style="font-weight: 600; font-size: 13px;"><?= htmlspecialchars($req['title']) ?></div>
+                                        <div style="font-size: 11.5px; color: var(--text-muted);"><?= htmlspecialchars($req['description']) ?></div>
+                                    </td>
+                                    <td>
+                                        <?php if (!empty($req['tech_name'])): ?>
+                                            <div style="font-weight: 700; color: var(--text-main); font-size: 13px;">
+                                                <i data-lucide="user-check" style="width: 12px; height: 12px; color: #10b981; vertical-align: middle;"></i>
+                                                <?= htmlspecialchars($req['tech_name']) ?>
+                                            </div>
+                                            <div style="font-size: 11px; color: var(--text-muted);">
+                                                <a href="tel:<?= htmlspecialchars($req['tech_phone']) ?>"><?= htmlspecialchars($req['tech_phone']) ?></a>
+                                            </div>
+                                            <?php
+                                            $waTechMsg = "Hello {$req['tech_name']}, update regarding customer {$customer['name']} ({$req['ticket_no']}).";
+                                            $waTechUrl = get_whatsapp_url($req['tech_phone'], $waTechMsg);
+                                            ?>
+                                            <div style="margin-top: 3px;">
+                                                <a href="<?= $waTechUrl ?>" target="_blank" class="btn btn-whatsapp btn-sm" style="font-size: 10px; padding: 2px 6px;">
+                                                    <i data-lucide="message-square" style="width: 10px; height: 10px;"></i> WhatsApp Tech
+                                                </a>
+                                            </div>
+                                        <?php else: ?>
+                                            <span style="font-size: 11.5px; color: #f59e0b;">⏳ Dispatch in progress</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <div style="font-size: 12px; font-weight: 600;"><?= format_date($req['job_date'] ?? $req['preferred_date']) ?></div>
+                                        <div style="font-size: 11px; color: var(--text-muted);"><?= htmlspecialchars($req['job_time'] ?? $req['preferred_time_slot'] ?? 'Flexible') ?></div>
+                                    </td>
+                                    <td><?= get_status_badge($req['job_status'] ?? $req['status']) ?></td>
+                                    <td>
+                                        <div style="display: flex; gap: 4px;">
+                                            <a href="customer_portal.php?ticket=<?= urlencode($req['ticket_no']) ?>" target="_blank" class="btn btn-secondary btn-sm" title="Customer View">
+                                                <i data-lucide="eye" style="width: 12px; height: 12px;"></i>
+                                            </a>
+                                            <a href="requests.php" class="btn btn-primary btn-sm" style="font-size: 11px; padding: 3px 6px;" title="Manage in Dispatch Desk">
+                                                <i data-lucide="send" style="width: 11px; height: 11px;"></i>
+                                            </a>
                                         </div>
                                     </td>
                                 </tr>

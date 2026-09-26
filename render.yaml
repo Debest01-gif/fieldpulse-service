@@ -7,15 +7,11 @@ services:
     dockerfilePath: ./Dockerfile
     healthCheckPath: /login.php
     envVars:
-      - key: DB_HOST
-        value: localhost
-      - key: DB_PORT
-        value: "3306"
-      - key: DB_NAME
-        value: field_service_db
-      - key: DB_USER
-        value: root
-      - key: DB_PASS
-        value: ""
+      - key: DB_DRIVER
+        value: sqlite
       - key: BASE_URL
         value: ""
+      - key: APP_ENV
+        value: production
+      - key: PHP_INI_SCAN_DIR
+        value: /usr/local/etc/php/conf.d

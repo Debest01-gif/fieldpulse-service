@@ -16,6 +16,10 @@ $recentNotifs = $db->query("SELECT * FROM notifications ORDER BY created_at DESC
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="FieldPulse Kenya — Field Service & Dispatch Management System">
+    <meta name="theme-color" content="#0284c7">
+    <link rel="manifest" href="<?= BASE_URL ?>/manifest.json">
+    <link rel="apple-touch-icon" href="<?= BASE_URL ?>/assets/icons/icon-192.png">
     <title><?= $pageTitle ?? 'Operations' ?> - <?= APP_NAME ?> Kenya</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,6 +27,15 @@ $recentNotifs = $db->query("SELECT * FROM notifications ORDER BY created_at DESC
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/style.css">
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/signature-pad.css">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+    @media print {
+        .app-sidebar, .app-topbar, .page-actions, .btn, .tab-bar { display: none !important; }
+        .app-main { margin: 0 !important; padding: 0 !important; }
+        .content-wrapper { padding: 0 !important; }
+        .card { box-shadow: none !important; border: 1px solid #ccc !important; }
+        body { background: #fff !important; color: #000 !important; }
+    }
+    </style>
 </head>
 <body>
 <div class="app-container">
@@ -41,8 +54,12 @@ $recentNotifs = $db->query("SELECT * FROM notifications ORDER BY created_at DESC
             </div>
 
             <div class="topbar-right">
+                <a href="<?= BASE_URL ?>/book_service.php" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 4px; font-weight: 600;">
+                    <i data-lucide="calendar-plus" style="width: 14px; height: 14px; color: #38bdf8;"></i> Book Service
+                </a>
+
                 <a href="<?= BASE_URL ?>/request_create.php" class="btn btn-primary btn-sm">
-                    <i data-lucide="plus-circle"></i> New Service Request
+                    <i data-lucide="plus-circle"></i> Log Request
                 </a>
 
                 <!-- Notification Bell -->

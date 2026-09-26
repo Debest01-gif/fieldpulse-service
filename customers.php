@@ -54,9 +54,8 @@ include __DIR__ . '/includes/header.php';
     </div>
 </div>
 
-<!-- Type Filter Tabs -->
-<div style="display: flex; gap: 8px; margin-bottom: 20px;">
-    <a href="customers.php" class="btn btn-sm <?= empty($typeFilter) ? 'btn-primary' : 'btn-secondary' ?>">All Clients</a>
+    <!-- Type filter tabs -->
+    <a href="customers.php" class="btn btn-sm <?= empty($typeFilter) ? 'btn-primary' : 'btn-secondary' ?>">All</a>
     <a href="customers.php?type=residential" class="btn btn-sm <?= $typeFilter == 'residential' ? 'btn-primary' : 'btn-secondary' ?>">Residential</a>
     <a href="customers.php?type=commercial" class="btn btn-sm <?= $typeFilter == 'commercial' ? 'btn-primary' : 'btn-secondary' ?>">Commercial</a>
     <a href="customers.php?type=industrial" class="btn btn-sm <?= $typeFilter == 'industrial' ? 'btn-primary' : 'btn-secondary' ?>">Industrial</a>
@@ -147,3 +146,25 @@ include __DIR__ . '/includes/header.php';
 </div>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>
+
+<script>
+function filterCustomers(query) {
+    const q = query.toLowerCase().trim();
+    const rows = document.querySelectorAll('#mainTable tbody tr');
+    let visible = 0;
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        const show = q === '' || text.includes(q);
+        row.style.display = show ? '' : 'none';
+        if (show) visible++;
+    });
+    // Update count badge
+    const badge = document.getElementById('customerCountBadge');
+    if (badge) badge.textContent = visible + ' Clients';
+}
+// Make search work on top bar search too
+document.querySelector('[data-table-search="mainTable"]')?.addEventListener('input', e => {
+    document.getElementById('customerSearch').value = e.target.value;
+    filterCustomers(e.target.value);
+});
+</script>
